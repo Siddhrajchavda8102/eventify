@@ -1,4 +1,10 @@
+import 'package:event_booking/core/network/helpers/base_api_result.dart';
+import 'package:event_booking/core/router/app_routes.dart';
+import 'package:event_booking/features/event/presentation/widgets/event_card.dart';
 import 'package:flutter/material.dart';
+import 'package:event_booking/features/event/presentation/providers/event_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,10 +15,115 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<EventProvider>().getEvents();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final provider = context.watch<EventProvider>();
+
     return Scaffold(
-      body: Center(
-        child: TextButton(onPressed: () async {}, child: Text('Add Events')),
+      appBar: AppBar(title: const Text("Eventify"), centerTitle: false),
+      body: Builder(
+        builder: (context) {
+          switch (provider.eventListResult.status) {
+            case ApiStatus.loading:
+              return const Center(child: CircularProgressIndicator());
+
+            case ApiStatus.error:
+              return Center(
+                child: Text(
+                  provider.eventListResult.errMessage ?? "Something went wrong",
+                ),
+              );
+
+            case ApiStatus.completed:
+              return Column(
+                children: [
+                  const SizedBox(height: 16),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: "Search events",
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onChanged: (value) => provider.searchEvents(value),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  SizedBox(
+                    height: 45,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: provider.categories.length,
+                      itemBuilder: (context, index) {
+                        final isSelected =
+                            provider.selectedCategory ==
+                            EventCategory.values[index];
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(provider.categories[index]),
+                            selected: isSelected,
+                            onSelected: (_) {
+                              provider.onSelectCategory(
+                                EventCategory.values[index],
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: provider.filteredEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = provider.filteredEvents[index];
+
+                        return InkWell(
+                          onTap: () {
+                            context.pushNamed(
+                              Routes.eventDetailsName,
+                              pathParameters: {'id': event.eventId},
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: EventCard(event: event),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+
+            default:
+              return const SizedBox();
+          }
+        },
       ),
     );
   }

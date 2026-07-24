@@ -1,6 +1,9 @@
 import 'package:event_booking/core/router/app_routes.dart';
+import 'package:event_booking/core/utils/toast_util.dart';
+import 'package:event_booking/features/auth/presentation/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,11 +30,18 @@ class _LoginPageState extends State<LoginPage> {
   void _login() {
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO:
-    // context.read<AuthProvider>().login(
-    //   email: _emailController.text.trim(),
-    //   password: _passwordController.text,
-    // );
+    context.read<LAuthProvider>().login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      onSuccess: () {
+        ToastUtils().showSuccessToast(description: Text('Login Successfully'));
+
+        context.goNamed(Routes.homeName);
+      },
+      onError: (value) {
+        ToastUtils().showErrorToast(description: Text(value));
+      },
+    );
   }
 
   @override

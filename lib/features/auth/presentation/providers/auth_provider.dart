@@ -52,17 +52,25 @@ class LAuthProvider extends BaseNotifier {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    VoidCallback? onSuccess,
+    ValueChanged<String>? onError,
+  }) async {
     try {
       setIsLoading(authResult);
 
       final user = await loginUsecase.login(email: email, password: password);
 
       setIsCompleted(authResult, user);
+      onSuccess?.call();
     } on AppException catch (e) {
       setIsError(authResult, e.message);
+      onError?.call(e.message);
     } catch (e) {
       setIsError(authResult, e.toString());
+      onError?.call(e.toString());
     }
   }
 

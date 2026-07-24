@@ -1,5 +1,6 @@
 import 'package:event_booking/core/router/app_routes.dart';
-import 'package:event_booking/features/auth/presentation/screens/home_page.dart';
+import 'package:event_booking/features/event/presentation/screens/event_details_page.dart';
+import 'package:event_booking/features/event/presentation/screens/home_page.dart';
 import 'package:event_booking/features/auth/presentation/screens/login_page.dart';
 import 'package:event_booking/features/auth/presentation/screens/register_page.dart';
 import 'package:event_booking/features/splash/presentation/splash_page.dart';
@@ -32,6 +33,14 @@ class AppRouter {
           path: Routes.home,
           name: Routes.homeName,
           builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: '${Routes.eventDetails}/:id',
+          name: Routes.eventDetailsName,
+          builder: (context, state) {
+            final eventId = state.pathParameters['id'] ?? '';
+            return EventDetailsPage(eventId: eventId);
+          },
         ),
       ],
       // errorBuilder: (context, state) => ErrorPage(state: state),

@@ -7,6 +7,12 @@ import 'package:event_booking/features/auth/domain/usecases/get_current_user_use
 import 'package:event_booking/features/auth/domain/usecases/login_usecase.dart';
 import 'package:event_booking/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:event_booking/features/auth/domain/usecases/register_usecase.dart';
+import 'package:event_booking/features/event/data/datasource/event_remote_datasource.dart';
+import 'package:event_booking/features/event/data/repository/event_repository_impl.dart';
+import 'package:event_booking/features/event/domain/repository/event_repository.dart';
+import 'package:event_booking/features/event/domain/usecases/get_event_usecase.dart';
+import 'package:event_booking/features/event/domain/usecases/get_events_usecase.dart';
+import 'package:event_booking/features/event/presentation/providers/event_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -21,18 +27,23 @@ class AllProviders {
 
   /// DataSources
   late AuthRemoteDataSource authRemoteDataSource;
+  late EventRemoteDataSource eventRemoteDataSource;
 
   /// Repo
   late AuthRepository authRepository;
+  late EventRepository eventRepository;
 
   /// usecases
   late RegisterUsecase registerUsecase;
   late LoginUsecase loginUsecase;
   late GetCurrentUserUsecase getCurrentUserUsecase;
   late LogoutUsecase logoutUsecase;
+  late GetEventsUsecase getEventsUsecase;
+  late GetEventUsecase getEventUsecase;
 
   /// Providers
   late LAuthProvider authProvider;
+  late EventProvider eventProvider;
 
   AllProviders() {
     apiClient = ApiClient();
@@ -45,10 +56,16 @@ class AllProviders {
       firebaseAuth,
       firebaseFirestore,
     );
+    eventRemoteDataSource = EventRemoteDataSourceImpl(
+      firestore: firebaseFirestore,
+    );
 
     /// Repos
     authRepository = AuthRepositoryImpl(
       authRemoteDataSource: authRemoteDataSource,
+    );
+    eventRepository = EventRepositoryImpl(
+      eventRemoteDataSource: eventRemoteDataSource,
     );
 
     /// Usecases
@@ -58,6 +75,8 @@ class AllProviders {
     getCurrentUserUsecase = GetCurrentUserUsecase(
       authRepository: authRepository,
     );
+    getEventsUsecase = GetEventsUsecase(repository: eventRepository);
+    getEventUsecase = GetEventUsecase(eventRepository: eventRepository);
 
     authProvider = LAuthProvider(
       registerUsecase: registerUsecase,
@@ -65,9 +84,16 @@ class AllProviders {
       logoutUsecase: logoutUsecase,
       getCurrentUserUsecase: getCurrentUserUsecase,
     );
+    eventProvider = EventProvider(
+      getEventsUsecase: getEventsUsecase,
+      getEventUsecase: getEventUsecase,
+    );
   }
 
   List<SingleChildWidget> getAllProvider() {
-    return [ChangeNotifierProvider(create: (context) => authProvider)];
+    return [
+      ChangeNotifierProvider(create: (context) => authProvider),
+      ChangeNotifierProvider(create: (context) => eventProvider),
+    ];
   }
 }
