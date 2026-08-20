@@ -14,4 +14,10 @@ class Routes {
 
   static const String eventDetails = '/eventDetails';
   static const String eventDetailsName = 'eventDetails';
+
+  static const String bookings = '/bookings';
+  static const String bookingsName = 'bookings';
+
+  static const String bookingDetails = '/bookingDetails';
+  static const String bookingDetailsName = 'bookingDetails';
 }

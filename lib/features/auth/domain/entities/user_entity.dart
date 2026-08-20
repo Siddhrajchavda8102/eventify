@@ -10,4 +10,9 @@ class UserEntity {
     required this.email,
     required this.createdAt,
   });
+
+  String get userId => uid;
+  String get userName => name;
+  String get userEmail => email;
+  DateTime get userCreatedAt => createdAt;
 }

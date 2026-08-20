@@ -7,11 +7,20 @@ import 'package:event_booking/features/auth/domain/usecases/get_current_user_use
 import 'package:event_booking/features/auth/domain/usecases/login_usecase.dart';
 import 'package:event_booking/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:event_booking/features/auth/domain/usecases/register_usecase.dart';
+import 'package:event_booking/features/booking/data/datasource/booking_remote_data_source.dart';
+import 'package:event_booking/features/booking/data/repository/booking_repo_impl.dart';
+import 'package:event_booking/features/booking/domain/repository/booking_repo.dart';
+import 'package:event_booking/features/booking/domain/usecases/add_booking_usecase.dart';
+import 'package:event_booking/features/booking/domain/usecases/cancel_booking_usecase.dart';
+import 'package:event_booking/features/booking/domain/usecases/get_bookings_from_id_usecase.dart';
+import 'package:event_booking/features/booking/domain/usecases/get_bookings_usecase.dart';
+import 'package:event_booking/features/booking/presentation/providers/booking_provider.dart';
 import 'package:event_booking/features/event/data/datasource/event_remote_datasource.dart';
 import 'package:event_booking/features/event/data/repository/event_repository_impl.dart';
 import 'package:event_booking/features/event/domain/repository/event_repository.dart';
 import 'package:event_booking/features/event/domain/usecases/get_event_usecase.dart';
 import 'package:event_booking/features/event/domain/usecases/get_events_usecase.dart';
+import 'package:event_booking/features/event/domain/usecases/update_event_usecase.dart';
 import 'package:event_booking/features/event/presentation/providers/event_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -28,10 +37,12 @@ class AllProviders {
   /// DataSources
   late AuthRemoteDataSource authRemoteDataSource;
   late EventRemoteDataSource eventRemoteDataSource;
+  late BookingRemoteDataSource bookingRemoteDataSource;
 
   /// Repo
   late AuthRepository authRepository;
   late EventRepository eventRepository;
+  late BookingRepo bookingRepository;
 
   /// usecases
   late RegisterUsecase registerUsecase;
@@ -40,10 +51,16 @@ class AllProviders {
   late LogoutUsecase logoutUsecase;
   late GetEventsUsecase getEventsUsecase;
   late GetEventUsecase getEventUsecase;
+  late AddBookingUsecase addBookingUsecase;
+  late UpdateEventUseCase updateEventUseCase;
+  late GetBookingsUsecase getBookingsUsecase;
+  late CancelBookingUsecase cancelBookingUsecase;
+  late GetBookingsFromIdUsecase getBookingsFromIdUsecase;
 
   /// Providers
   late LAuthProvider authProvider;
   late EventProvider eventProvider;
+  late BookingProvider bookingProvider;
 
   AllProviders() {
     apiClient = ApiClient();
@@ -59,6 +76,9 @@ class AllProviders {
     eventRemoteDataSource = EventRemoteDataSourceImpl(
       firestore: firebaseFirestore,
     );
+    bookingRemoteDataSource = BookingRemoteDataSourceImpl(
+      firestore: firebaseFirestore,
+    );
 
     /// Repos
     authRepository = AuthRepositoryImpl(
@@ -66,6 +86,9 @@ class AllProviders {
     );
     eventRepository = EventRepositoryImpl(
       eventRemoteDataSource: eventRemoteDataSource,
+    );
+    bookingRepository = BookingRepoImpl(
+      bookingRemoteDataSource: bookingRemoteDataSource,
     );
 
     /// Usecases
@@ -77,6 +100,13 @@ class AllProviders {
     );
     getEventsUsecase = GetEventsUsecase(repository: eventRepository);
     getEventUsecase = GetEventUsecase(eventRepository: eventRepository);
+    addBookingUsecase = AddBookingUsecase(bookingRepo: bookingRepository);
+    updateEventUseCase = UpdateEventUseCase(eventRepository: eventRepository);
+    getBookingsUsecase = GetBookingsUsecase(bookingRepo: bookingRepository);
+    cancelBookingUsecase = CancelBookingUsecase(bookingRepo: bookingRepository);
+    getBookingsFromIdUsecase = GetBookingsFromIdUsecase(
+      bookingRepo: bookingRepository,
+    );
 
     authProvider = LAuthProvider(
       registerUsecase: registerUsecase,
@@ -87,6 +117,13 @@ class AllProviders {
     eventProvider = EventProvider(
       getEventsUsecase: getEventsUsecase,
       getEventUsecase: getEventUsecase,
+      updateEventUseCase: updateEventUseCase,
+    );
+    bookingProvider = BookingProvider(
+      addBookingUsecase: addBookingUsecase,
+      getBookingsUsecase: getBookingsUsecase,
+      cancelBookingUsecase: cancelBookingUsecase,
+      getBookingsFromIdUsecase: getBookingsFromIdUsecase,
     );
   }
 
@@ -94,6 +131,7 @@ class AllProviders {
     return [
       ChangeNotifierProvider(create: (context) => authProvider),
       ChangeNotifierProvider(create: (context) => eventProvider),
+      ChangeNotifierProvider(create: (context) => bookingProvider),
     ];
   }
 }

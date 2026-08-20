@@ -6,6 +6,7 @@ import 'package:event_booking/core/network/helpers/base_notifier.dart';
 import 'package:event_booking/features/event/domain/entities/event_entity.dart';
 import 'package:event_booking/features/event/domain/usecases/get_event_usecase.dart';
 import 'package:event_booking/features/event/domain/usecases/get_events_usecase.dart';
+import 'package:event_booking/features/event/domain/usecases/update_event_usecase.dart';
 
 enum EventCategory {
   all(label: "All"),
@@ -24,14 +25,17 @@ enum EventCategory {
 class EventProvider extends BaseNotifier {
   final GetEventsUsecase getEventsUsecase;
   final GetEventUsecase getEventUsecase;
+  final UpdateEventUseCase updateEventUseCase;
 
   EventProvider({
     required this.getEventsUsecase,
     required this.getEventUsecase,
+    required this.updateEventUseCase,
   });
 
   BaseApiResult<List<EventEntity>> eventListResult = BaseApiResult();
   BaseApiResult<EventEntity> eventEntityResult = BaseApiResult();
+  BaseApiResult<void> updateEventResult = BaseApiResult();
 
   List<EventEntity> get events =>
       UnmodifiableListView(eventListResult.data ?? []);
@@ -69,6 +73,20 @@ class EventProvider extends BaseNotifier {
       setIsError(eventEntityResult, e.message);
     } catch (e) {
       setIsError(eventEntityResult, e.toString());
+    }
+  }
+
+  Future<void> updateEvent(String eventId, int selectedQuantity) async {
+    try {
+      setIsLoading(updateEventResult);
+
+      await updateEventUseCase.call(eventId, selectedQuantity);
+
+      setIsCompleted(updateEventResult, null);
+    } on AppException catch (e) {
+      setIsError(updateEventResult, e.message);
+    } catch (e) {
+      setIsError(updateEventResult, e.toString());
     }
   }
 

@@ -6,6 +6,8 @@ abstract class EventRemoteDataSource {
   Future<List<EventModel>> getEvents();
 
   Future<EventModel> getEvent(String id);
+
+  Future<void> updateEvent(String id, int quantity);
 }
 
 class EventRemoteDataSourceImpl implements EventRemoteDataSource {
@@ -34,6 +36,35 @@ class EventRemoteDataSourceImpl implements EventRemoteDataSource {
       return EventModel.fromFirestore(event);
     } on FirebaseException catch (e) {
       throw ServerException(e.message ?? 'Failed to fetch event');
+    } catch (e) {
+      throw UnknownException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateEvent(String id, int quantity) async {
+    try {
+      // await firestore.collection('events').doc(id).update({
+      //   'availableSeats': FieldValue.increment(-quantity),
+      // });
+
+      await firestore.runTransaction((transaction) async {
+        final eventRef = firestore.collection('events').doc(id);
+
+        final snapshot = await transaction.get(eventRef);
+
+        final availableSeats = snapshot['availableSeats'] as int;
+
+        if (availableSeats < quantity) {
+          throw Exception('Not enough seats available.');
+        }
+
+        transaction.update(eventRef, {
+          'availableSeats': availableSeats + quantity,
+        });
+      });
+    } on FirebaseException catch (e) {
+      throw ServerException(e.message ?? 'Failed to update event');
     } catch (e) {
       throw UnknownException(e.toString());
     }

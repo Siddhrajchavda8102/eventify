@@ -28,4 +28,13 @@ class EventRepositoryImpl implements EventRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> updateEvent(String id, int quantity) async {
+    try {
+      await eventRemoteDataSource.updateEvent(id, quantity);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -25,12 +25,21 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     final provider = context.watch<EventProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Eventify"), centerTitle: false),
+      appBar: AppBar(
+        title: const Text("Eventify"),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            onPressed: () {
+              context.pushNamed(Routes.bookingsName);
+            },
+            icon: Icon(Icons.bookmarks_outlined),
+          ),
+        ],
+      ),
       body: Builder(
         builder: (context) {
           switch (provider.eventListResult.status) {

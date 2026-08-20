@@ -83,7 +83,7 @@ class EventCard extends StatelessWidget {
 
                     const Spacer(),
 
-                    ElevatedButton(onPressed: () {}, child: const Text("Book")),
+                    // ElevatedButton(onPressed: () {}, child: const Text("Book")),
                   ],
                 ),
               ],

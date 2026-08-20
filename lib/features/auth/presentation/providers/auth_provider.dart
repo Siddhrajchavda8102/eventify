@@ -1,6 +1,7 @@
 import 'package:event_booking/core/errors/exceptions.dart';
 import 'package:event_booking/core/network/helpers/base_api_result.dart';
 import 'package:event_booking/core/network/helpers/base_notifier.dart';
+import 'package:event_booking/core/utils/app_session.dart';
 import 'package:event_booking/features/auth/domain/entities/user_entity.dart';
 import 'package:event_booking/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:event_booking/features/auth/domain/usecases/login_usecase.dart';
@@ -93,6 +94,7 @@ class LAuthProvider extends BaseNotifier {
       setIsLoading(authResult);
 
       final user = await getCurrentUserUsecase.getCurrentUser();
+      AppSession.currentUser = user;
 
       setIsCompleted(authResult, user);
     } catch (e) {

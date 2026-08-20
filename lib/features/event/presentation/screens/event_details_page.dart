@@ -1,3 +1,6 @@
+import 'package:event_booking/core/utils/app_session.dart';
+import 'package:event_booking/core/utils/toast_util.dart';
+import 'package:event_booking/features/booking/presentation/providers/booking_provider.dart';
 import 'package:event_booking/features/event/presentation/providers/event_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -23,11 +26,76 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     });
   }
 
+  Future<int> selectQuantity(BuildContext context) async {
+    final provider = context.read<BookingProvider>();
+
+    final selectedQuantity = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        int quantity = 1;
+
+        return AlertDialog(
+          title: const Text("Select Quantity"),
+          content: StatefulBuilder(
+            builder: (context, setState) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        if (quantity > 1) {
+                          setState(() {
+                            quantity--;
+                          });
+                        }
+                      },
+                    ),
+                    Text(quantity.toString()),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          quantity++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(0),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              ),
+              onPressed: () => Navigator.of(context).pop(quantity),
+              child: const Text("Confirm"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (selectedQuantity != null) {
+      provider.setSelectedQuantity(selectedQuantity);
+    }
+
+    return selectedQuantity ?? 0;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<EventProvider>();
+    final eventProvider = context.watch<EventProvider>();
 
-    final event = provider.eventEntityResult.data;
+    final event = eventProvider.eventEntityResult.data;
 
     return Scaffold(
       appBar: AppBar(title: const Text("Event Details")),
@@ -35,17 +103,65 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         minimum: const EdgeInsets.fromLTRB(20, 0, 20, 50),
         child: SizedBox(
           height: 50,
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: Book Event
-            },
-            child: const Text("Book Now"),
+          child: Consumer<BookingProvider>(
+            builder: (context, provider, child) => ElevatedButton(
+              onPressed: () async {
+                final quantity = await selectQuantity(context);
+
+                if (quantity <= 0) {
+                  return;
+                }
+
+                if (event?.availableSeats == null ||
+                    event!.availableSeats < quantity) {
+                  ToastUtils().showErrorToast(
+                    description: Text("Not enough seats available"),
+                  );
+                  return;
+                }
+
+                final userId = AppSession.currentUser?.userId ?? '';
+
+                final totalPrice = (event.price) * quantity;
+
+                final bookingModel = provider.getBookingModelFromEventId(
+                  event,
+                  userId: userId,
+                  quantity: quantity,
+                  totalPrice: totalPrice,
+                );
+
+                provider.addBooking(
+                  bookingModel: bookingModel,
+                  onSuccess: () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Booking Successful")),
+                    );
+
+                    await eventProvider.updateEvent(event.eventId, -quantity);
+
+                    // ignore: use_build_context_synchronously
+                    await context.read<EventProvider>().getEvent(
+                      widget.eventId,
+                    );
+                  },
+                  onError: (error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Booking Failed: $error")),
+                    );
+                  },
+                );
+              },
+              child: provider.addBookingResult.isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("Book Now"),
+            ),
           ),
         ),
       ),
       body: Builder(
         builder: (context) {
-          if (provider.eventEntityResult.isLoading) {
+          if (eventProvider.eventEntityResult.isLoading) {
             return CircularProgressIndicator();
           }
 
@@ -121,6 +237,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
                       Text(
                         event.description,
+                        // 'lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],

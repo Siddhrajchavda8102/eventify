@@ -1,4 +1,7 @@
 import 'package:event_booking/core/router/app_routes.dart';
+import 'package:event_booking/features/booking/domain/entities/booking_entity.dart';
+import 'package:event_booking/features/booking/presentation/screens/booking_details_page.dart';
+import 'package:event_booking/features/booking/presentation/screens/my_bookings_page.dart';
 import 'package:event_booking/features/event/presentation/screens/event_details_page.dart';
 import 'package:event_booking/features/event/presentation/screens/home_page.dart';
 import 'package:event_booking/features/auth/presentation/screens/login_page.dart';
@@ -40,6 +43,19 @@ class AppRouter {
           builder: (context, state) {
             final eventId = state.pathParameters['id'] ?? '';
             return EventDetailsPage(eventId: eventId);
+          },
+        ),
+        GoRoute(
+          path: Routes.bookings,
+          name: Routes.bookingsName,
+          builder: (context, state) => const MyBookingsPage(),
+        ),
+        GoRoute(
+          path: Routes.bookingDetails,
+          name: Routes.bookingDetailsName,
+          builder: (context, state) {
+            final booking = state.extra as String;
+            return BookingDetailsPage(id: booking);
           },
         ),
       ],
